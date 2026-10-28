@@ -26,7 +26,7 @@ LEDGER_NAME = "ledger.jsonl"
 
 # --- tokenisation ---------------------------------------------------------
 
-_WORD = re.compile(r"[a-z0-9_]+")
+_WORD = re.compile(r"[a-z]+|[0-9]+")
 _CJK = re.compile(r"[\u4e00-\u9fff]+")
 
 # Function characters carry no topical signal; keeping them would drown BM25.
