@@ -102,6 +102,52 @@ episode   原始事件，不可变            ep_xxx
 | `engram bench` | 跑诱饵基准，测自己的假记忆率 |
 | `engram log --all` | 列全部断言（含已作废） |
 
+## 接入任何 MCP 客户端
+
+```bash
+python -m engram.mcp        # stdio JSON-RPC，零依赖
+```
+
+```json
+{
+  "mcpServers": {
+    "engram": {
+      "command": "python",
+      "args": ["-m", "engram.mcp"],
+      "env": { "ENGRAM_ROOT": "/path/to/your/project" }
+    }
+  }
+}
+```
+
+暴露五个工具：`engram_remember` / `engram_recall` / `engram_correct` /
+`engram_verify` / `engram_stats`。
+
+一次真实会话（`python examples/mcp_session.py`）：
+
+```
+→ tools/call {"name":"engram_remember",
+              "arguments":{"text":"图片长边压到 1280px","kind":"preference"}}
+← saved cl_5c13… (preference, conf=0.8)   source: ep_79d2…
+
+→ tools/call {"name":"engram_recall","arguments":{"query":"不是 1920px 吗"}}
+← 1. [0.26] 图片长边压到 1280px  (cl_5c13…, preference, src=ep_79d2…)
+   WARNING hard-mismatch: query says ['1920px'], memory says ['1280px']
+```
+
+模型用错数字来问，记忆不顺着它编，而是把对不上的地方指出来。
+
+## 在线演示
+
+`docs/index.html` 是一个**自包含**的可交互页面（无构建、无网络请求）：
+记住一条、提问、塞一条冲突、点「纠正」，然后看账本怎么变。
+
+本地直接双击 `docs/index.html` 就能开。放到 GitHub Pages 后地址是
+`https://<user>.github.io/engram/`（Settings → Pages → Deploy from branch → `main` / `/docs`）。
+
+页面里是 `docs/engram-lite.js`——同一套规则用 JS 重写的小引擎，只为了在浏览器里跑得起来；
+**以 Python 版为准**，两边行为不一致时算 bug。
+
 ## 内置红队：`engram bench`
 自带 10 条记忆，自动生成「语义相同、数字不同」的诱饵，测两种失败：
 
