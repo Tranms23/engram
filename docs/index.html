@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engram · 可审计的记忆</title>
+<style>
+  :root{
+    --ink:#15181e; --muted:#6b7280; --line:#e6e8ee; --bg:#fbfbfd;
+    --blue:#2f6fed; --blue-soft:#eef3ff; --amber:#b45309; --amber-soft:#fff7e6;
+    --red:#c92a2a; --red-soft:#fff1f1; --green:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.65 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+  }
+  a{color:var(--blue); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  header{
+    max-width:1180px; margin:0 auto; padding:44px 24px 22px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;
+  }
+  .brand h1{margin:0; font-size:30px; letter-spacing:-.02em}
+  .brand h1 span{color:var(--blue)}
+  .brand p{margin:8px 0 0; color:var(--muted); max-width:56ch}
+  .brand .tag{
+    display:inline-block; margin-left:10px; padding:2px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue); font-size:12px; font-weight:600;
+    vertical-align:middle;
+  }
+  .links{display:flex; gap:14px; font-size:14px}
+
+  main{max-width:1180px; margin:0 auto; padding:0 24px 30px;
+       display:grid; grid-template-columns:1.05fr .95fr; gap:22px; align-items:start}
+  @media (max-width:980px){ main{grid-template-columns:1fr} }
+
+  .panel{background:#fff; border:1px solid var(--line); border-radius:16px;
+         box-shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px -16px rgba(16,24,40,.18)}
+  .panel-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 20px; border-bottom:1px solid var(--line); font-weight:600;
+  }
+  .panel-head .meta{font-weight:400; color:var(--muted); font-size:13px}
+
+  /* ledger */
+  .cards{padding:14px; display:flex; flex-direction:column; gap:10px; min-height:420px}
+  .card{
+    position:relative; border:1px solid var(--line); border-left:3px solid var(--blue);
+    border-radius:12px; padding:12px 14px; background:#fff; transition:.18s;
+  }
+  .card.contested{border-left-color:#e0a800; background:var(--amber-soft)}
+  .card.retracted{border-left-color:#c9ccd4; background:#fafafb; opacity:.72}
+  .card.retracted .text{text-decoration:line-through; color:var(--muted)}
+  .card.flash{box-shadow:0 0 0 3px var(--blue-soft); border-color:var(--blue)}
+  .card-top{display:flex; gap:8px; align-items:center; font-size:12px; color:var(--muted)}
+  .pill{padding:1px 8px; border-radius:999px; background:#f1f3f8; color:#4b5563; font-weight:600}
+  .pill.active{background:var(--blue-soft); color:var(--blue)}
+  .pill.contested{background:#fdf1d6; color:var(--amber)}
+  .pill.retracted{background:#eceef3; color:#6b7280}
+  .cid{margin-left:auto; font-family:ui-monospace,Consolas,monospace; font-size:11.5px}
+  .text{margin:7px 0 6px; font-size:15.5px}
+  .card .meta{font-size:12.5px; color:var(--muted)}
+  .card button{
+    position:absolute; right:10px; bottom:10px; border:1px solid var(--line);
+    background:#fff; color:var(--muted); border-radius:8px; padding:3px 9px;
+    font-size:12px; cursor:pointer;
+  }
+  .card button:hover{border-color:var(--blue); color:var(--blue)}
+
+  /* lab */
+  .lab .body{padding:16px 20px 20px}
+  .row{display:flex; gap:8px}
+  input[type=text]{
+    flex:1; min-width:0; padding:11px 13px; border:1px solid var(--line); border-radius:10px;
+    font:inherit; outline:none; background:#fff;
+  }
+  input[type=text]:focus{border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft)}
+  .btn{
+    border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px;
+    padding:11px 15px; font:inherit; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover{border-color:#c9ccd4}
+  .btn.primary{background:var(--blue); border-color:var(--blue); color:#fff}
+  .btn.primary:hover{filter:brightness(1.06)}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px}
+  .chips button{
+    border:1px dashed #cfd4de; background:#fff; color:var(--muted); border-radius:999px;
+    padding:5px 12px; font:inherit; font-size:13px; cursor:pointer;
+  }
+  .chips button:hover{border-color:var(--blue); color:var(--blue)}
+
+  .log{
+    margin-top:14px; min-height:210px; max-height:320px; overflow:auto;
+    border:1px solid var(--line); border-radius:12px; padding:12px 14px;
+    background:#fcfcfe; font-size:13.5px;
+  }
+  .log .empty{color:var(--muted)}
+  .entry{margin-bottom:10px}
+  .entry .q{color:var(--muted)}
+  .entry .a{margin-top:3px}
+  .hit{padding:7px 10px; border-radius:9px; background:#fff; border:1px solid var(--line); margin-top:6px}
+  .hit .score{color:var(--blue); font-weight:700; font-family:ui-monospace,Consolas,monospace}
+  .hit .src{color:var(--muted); font-size:12px}
+  .warn{margin-top:6px; padding:7px 10px; border-radius:9px;
+        background:var(--red-soft); color:var(--red); border:1px solid #f3c9c9; font-size:12.5px}
+
+  .meter{margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:4px 14px; font-size:13px; color:var(--muted)}
+  .meter b{color:var(--ink); font-variant-numeric:tabular-nums}
+  .bar{grid-column:1/-1; height:7px; border-radius:999px; background:#eceef3; overflow:hidden; margin-top:6px}
+  .bar i{display:block; height:100%; width:0; background:var(--blue); transition:width .35s}
+
+  footer{max-width:1180px; margin:0 auto; padding:8px 24px 60px; color:var(--muted); font-size:13.5px}
+  footer ul{margin:8px 0 0; padding-left:18px}
+  footer li{margin:3px 0}
+  code{font-family:ui-monospace,Consolas,monospace; font-size:.92em;
+       background:#f1f3f8; padding:1px 5px; border-radius:5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Engram <span>·</span> 可审计的记忆<span class="tag">demo</span></h1>
+    <p>每条记忆都能回答三个问题：谁说的、什么时候、错了证据在哪。
+       记忆不是数据库，是账本——只追加、可校验、能纠正。</p>
+  </div>
+  <div class="links">
+    <a href="https://github.com/Tranms23/engram">GitHub →</a>
+    <a href="https://github.com/Tranms23/engram/blob/main/reports/RESULTS.md">评测 →</a>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-head">记忆账本 <span class="meta" id="ledgerMeta">—</span></div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="panel lab">
+    <div class="panel-head">试一下</div>
+    <div class="body">
+      <div class="row">
+        <input id="input" type="text" placeholder="记一件事，或者问一个问题…" autocomplete="off">
+        <button class="btn" id="btnRemember">记住</button>
+        <button class="btn primary" id="btnAsk">提问</button>
+      </div>
+
+      <div class="chips">
+        <button data-act="decoy">用错的数字提问</button>
+        <button data-act="conflict">塞一条冲突记忆</button>
+        <button data-act="correct">纠正最近一条</button>
+        <button data-act="reset">重置</button>
+      </div>
+
+      <div class="log" id="log"><div class="empty">试试「用错的数字提问」——看它会不会把 1920px 当成事实。</div></div>
+
+      <div class="meter">
+        <div>本次注入 <b id="tokIn">0</b> tok</div>
+        <div>全量注入 <b id="tokAll">0</b> tok</div>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div>规则（与 Python 版一致）：只追加 · 无源不入 · 硬事实不冲突裁决 · 检索自带警告。</div>
+  <ul>
+    <li>2000 条记忆时，单次注入 <b>54 tok</b>；把整份记忆塞进去是 <b>20,516 tok</b>。</li>
+    <li>24 条「只有数字错」的诱饵：engram 检出 24/24，朴素清单静默吸收 24/24。</li>
+  </ul>
+  <div style="margin-top:10px">这是浏览器里的简化实现（<code>web/engram-lite.js</code>），完整版是 <code>pip install engram-memory</code>。</div>
+</footer>
+
+<script src="engram-lite.js"></script>
+<script>
+(function () {
+  const { createStore, estTokens } = window.EngramLite;
+
+  const SEED = [
+    { text: "图片长边压到 1280px 再传给模型", kind: "preference", confidence: 0.9 },
+    { text: "网关超时设为 30s", kind: "decision", confidence: 0.95 },
+    { text: "报告导出必须是 A4，页边距 2cm", kind: "constraint", confidence: 0.95 },
+    { text: "备份目录是 backups/", kind: "decision", confidence: 0.85 },
+    { text: "密码长度至少 12 位", kind: "constraint", confidence: 0.9 },
+    { text: "每周五 18:00 前提交周报", kind: "fact", confidence: 0.8 },
+  ];
+
+  let store = createStore(SEED);
+  const $ = (id) => document.getElementById(id);
+  const cardsEl = $("cards"), logEl = $("log");
+
+  function guessKind(text) {
+    if (/必须|不能|只允许|至少|不超过/.test(text)) return "constraint";
+    if (/改成|定为|决定|以后都/.test(text)) return "decision";
+    if (/喜欢|偏好|习惯|最好/.test(text)) return "preference";
+    return "fact";
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  function render() {
+    const s = store.stats();
+    $("ledgerMeta").textContent =
+      s.claims + " 条 · 活跃 " + s.active + " · 冲突 " + s.contested + " · 作废 " + s.retracted;
+    cardsEl.innerHTML = "";
+    for (const c of store.claims.slice().reverse()) {
+      const el = document.createElement("div");
+      el.className = "card " + c.status;
+      el.dataset.id = c.id;
+      el.innerHTML =
+        '<div class="card-top">' +
+          '<span class="pill ' + c.status + '">' + c.status + "</span>" +
+          "<span>" + esc(c.kind) + "</span>" +
+          '<span class="cid">' + esc(c.id) + "</span>" +
+        "</div>" +
+        '<div class="text">' + esc(c.text) + "</div>" +
+        '<div class="meta">conf ' + c.confidence.toFixed(2) +
+          " · src " + esc(c.sources[0]) +
+          (c.supersedes.length ? " · 取代 " + esc(c.supersedes[0]) : "") +
+          (c.supersededBy ? " · 已被 " + esc(c.supersededBy) + " 取代" : "") +
+        "</div>" +
+        (c.status === "retracted" ? "" : '<button data-fix="' + esc(c.id) + '">纠正</button>');
+      cardsEl.appendChild(el);
+    }
+    $("tokAll").textContent = store.fullTokens();
+  }
+
+  function addLog(html) {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = html;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function resetLog() { logEl.innerHTML = ""; }
+
+  function flash(id) {
+    const el = cardsEl.querySelector('[data-id="' + id + '"]');
+    if (!el) return;
+    el.classList.add("flash");
+    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    setTimeout(() => el.classList.remove("flash"), 1400);
+  }
+
+  function ask(text) {
+    const hits = store.recall(text, 3);
+    addLog('<div class="q">？ ' + esc(text) + "</div>");
+    if (!hits.length) {
+      addLog('<div class="a" style="color:#6b7280">（没有命中。记忆里没有相关内容。）</div>');
+      $("tokIn").textContent = 0;
+      $("bar").style.width = "0%";
+      return;
+    }
+    let html = "";
+    hits.forEach((h, i) => {
+      html += '<div class="hit">' +
+        '<span class="score">' + h.score.toFixed(2) + "</span> " + esc(h.claim.text) +
+        '<div class="src">' + esc(h.claim.id) + " · " + esc(h.claim.kind) +
+        " · conf " + h.claim.confidence.toFixed(2) + " · src " + esc(h.claim.sources[0]) + "</div>" +
+        (h.warning ? '<div class="warn">⚠ ' + esc(h.warning) + "</div>" : "") +
+      "</div>";
+    });
+    addLog('<div class="a">' + html + "</div>");
+
+    const inject = hits.reduce((a, h) => a + estTokens(h.claim.text), 0);
+    const all = store.fullTokens();
+    $("tokIn").textContent = inject;
+    $("bar").style.width = Math.min(100, (inject / all) * 100) + "%";
+    flash(hits[0].claim.id);
+  }
+
+  function remember(text) {
+    try {
+      const r = store.add({ text, kind: guessKind(text) });
+      addLog('<div class="q">＋ 记住：' + esc(text) + "</div>");
+      if (r.merged) {
+        addLog('<div class="a" style="color:#6b7280">与已有记忆相同，已合并（来源并集、置信度取高）。</div>');
+      } else if (r.conflict) {
+        addLog('<div class="a" style="color:#b45309">检测到冲突：已有 ' +
+          esc(JSON.stringify(r.conflict.leftHard)) + "，新来 " +
+          esc(JSON.stringify(r.conflict.rightHard)) +
+          "。两条都保留，标为 contested —— 不替你裁决。</div>");
+      }
+      render();
+      flash(r.claim.id);
+    } catch (e) {
+      addLog('<div class="a" style="color:#c92a2a">' + esc(e.message) + "</div>");
+    }
+  }
+
+  $("btnRemember").onclick = () => {
+    const v = $("input").value.trim();
+    if (!v) return;
+    remember(v);
+    $("input").value = "";
+  };
+  $("btnAsk").onclick = () => {
+    const v = $("input").value.trim();
+    if (!v) return;
+    ask(v);
+    $("input").value = "";
+  };
+  $("input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") (e.shiftKey ? $("btnRemember") : $("btnAsk")).click();
+  });
+
+  document.querySelectorAll(".chips button").forEach((b) => {
+    b.onclick = () => {
+      const act = b.dataset.act;
+      if (act === "decoy") ask("图片要压到 1920px 吗");
+      if (act === "conflict") remember("图片长边压到 1920px 再传给模型");
+      if (act === "correct") {
+        const last = store.claims.slice().reverse().find((c) => c.status !== "retracted");
+        if (!last) return;
+        const next = prompt("新的事实是什么？", last.text.replace(/\d+/, (m) => String(Number(m) * 2)));
+        if (!next) return;
+        const { old, claim } = store.correct(last.id, next, "用户当场纠正");
+        addLog('<div class="q">✎ 纠正 ' + esc(old.id) + "</div>");
+        addLog('<div class="a" style="color:#6b7280">旧条目转为 <b>retracted</b>，没有删除；' +
+          "新条目 " + esc(claim.id) + " 取代它。历史仍在账本里。</div>");
+        render();
+        flash(claim.id);
+      }
+      if (act === "reset") {
+        store = createStore(SEED);
+        resetLog();
+        render();
+        $("tokIn").textContent = 0;
+        $("bar").style.width = "0%";
+        addLog('<div class="empty">已重置。试试「用错的数字提问」。</div>');
+      }
+    };
+  });
+
+  cardsEl.addEventListener("click", (e) => {
+    const id = e.target.dataset && e.target.dataset.fix;
+    if (!id) return;
+    const c = store.claims.find((x) => x.id === id);
+    const next = prompt("改成什么？", c.text.replace(/\d+/, (m) => String(Number(m) * 2)));
+    if (!next) return;
+    const { old, claim } = store.correct(id, next, "用户当场纠正");
+    addLog('<div class="q">✎ 纠正 ' + esc(old.id) + "</div>");
+    addLog('<div class="a" style="color:#6b7280">旧条目标记为 retracted，新条目 ' +
+      esc(claim.id) + " 取代它。</div>");
+    render();
+    flash(claim.id);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
