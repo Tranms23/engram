@@ -1,0 +1,64 @@
+{
+  "retrieval": [
+    {
+      "size": 50,
+      "engram": {
+        "recall@1": 1.0,
+        "recall@3": 1.0,
+        "tokens_per_query": 52.02
+      },
+      "keyword": {
+        "recall@1": 1.0,
+        "recall@3": 1.0
+      },
+      "full_dump_tokens_per_query": 497.0
+    },
+    {
+      "size": 500,
+      "engram": {
+        "recall@1": 1.0,
+        "recall@3": 1.0,
+        "tokens_per_query": 53.592
+      },
+      "keyword": {
+        "recall@1": 1.0,
+        "recall@3": 1.0
+      },
+      "full_dump_tokens_per_query": 5105.0
+    },
+    {
+      "size": 2000,
+      "engram": {
+        "recall@1": 1.0,
+        "recall@3": 1.0,
+        "tokens_per_query": 53.887
+      },
+      "keyword": {
+        "recall@1": 1.0,
+        "recall@3": 1.0
+      },
+      "full_dump_tokens_per_query": 20516.0
+    }
+  ],
+  "decoy": {
+    "n": 24,
+    "caught": 24,
+    "separate": 0,
+    "detect_rate": 1.0,
+    "warned_rate": 1.0,
+    "naive_silent_rate": 1.0,
+    "provenance": 1.0
+  },
+  "audit": {
+    "engram": {
+      "who": true,
+      "when": true,
+      "corrected": true
+    },
+    "naive": {
+      "who": false,
+      "when": false,
+      "corrected": false
+    }
+  }
+}
