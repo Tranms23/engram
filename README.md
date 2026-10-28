@@ -1,5 +1,8 @@
 # Engram
 
+[![ci](https://github.com/Tranms23/engram/actions/workflows/ci.yml/badge.svg)](https://github.com/Tranms23/engram/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Memory you can audit.** 可审计的记忆——每条记忆都能回答：谁说的、什么时候、错了证据在哪。
 
 ```
@@ -100,7 +103,6 @@ episode   原始事件，不可变            ep_xxx
 | `engram log --all` | 列全部断言（含已作废） |
 
 ## 内置红队：`engram bench`
-
 自带 10 条记忆，自动生成「语义相同、数字不同」的诱饵，测两种失败：
 
 ```
@@ -121,6 +123,24 @@ provenance        1.000
 - **warned rate**：你用错数字去问时，系统是否警告你。
 
 跑不过的提交不许合并。**没有度量的记忆系统不算系统。**
+
+## 评测（可复现）
+
+```bash
+python eval/eval.py      # 测量
+python eval/charts.py    # 出图
+```
+
+结果见 [reports/RESULTS.md](reports/RESULTS.md)，三条结论：
+
+| 指标 | engram | 朴素清单 |
+|---|---|---|
+| 记忆涨到 2,000 条时的单次注入 | **54 token** | 20,516 token |
+| 24 条诱饵的静默合并 | **0** | 24 |
+| 能回答"谁说的/何时/改过吗" | **3/3** | 0/3 |
+
+检索准确率在合成语料上**饱和**（双方都是 1.000），所以不拿它当卖点——
+这条负结果也写在报告里。
 
 ## 和现有方案的差别
 
